@@ -1090,6 +1090,11 @@ public:
      * @return size_t number of packets
      */
     size_t queueWaitingReceivedPacketsLength() { return q_WRP->getLength(); }
+
+    /**
+     * * @brief Helper function to immediately send out a hello packet.
+     */
+    void sendHelloPacketNow();
 };
 
 #endif

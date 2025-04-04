@@ -85,7 +85,7 @@ void RoutingTableService::processRoute(RoutePacket* p, int8_t receivedSNR) {
     ESP_LOGI(LM_TAG, "Received broker IP %s from %X", senderBrokerIP.toString().c_str(), p->src);
 
     // Create & process sender node (Node that sent this route update)
-    NetworkNode* receivedNode = new NetworkNode(p->src, 1, p->nodeRole, senderBrokerIP);
+    NetworkNode* receivedNode = new NetworkNode(p->src, 1, p->nodeRole, senderBrokerIP, p->ble_conn_id);
     processRoute(p->src, receivedNode, senderBrokerIP);
     delete receivedNode;
 
@@ -145,6 +145,11 @@ void RoutingTableService::processRoute(uint16_t via, NetworkNode* node, IPAddres
             ESP_LOGI(LM_TAG, "Updating broker IP of %X to %s", node->address, brokerIP.toString().c_str());
             rNode->networkNode.mqttBrokerIP = brokerIP;
         }
+
+        if (getNextHop(node->address) == via && rNode->networkNode.ble_conn_id != node->ble_conn_id) {
+            ESP_LOGI(LM_TAG, "Updating BLE conn ID of %X to %u", node->address, node->ble_conn_id);
+            rNode->networkNode.ble_conn_id = node->ble_conn_id;
+        }        
     }
 }
 
@@ -229,13 +234,14 @@ void RoutingTableService::printRoutingTable() {
 
             IPAddress ip = node->networkNode.mqttBrokerIP;
             Serial.printf(
-                "%d | %04X | via %04X | metric %d | Role %d | Broker_IP %d.%d.%d.%d\n",
+                "%d | %04X | via %04X | metric %d | Role %d | Broker_IP %d.%d.%d.%d | BLE_Conn_ID %d\n",
                 position,
                 node->networkNode.address,
                 node->via,
                 node->networkNode.metric,
                 node->networkNode.role,
-                ip[0], ip[1], ip[2], ip[3]
+                ip[0], ip[1], ip[2], ip[3],
+                node->networkNode.ble_conn_id
             );
             
             position++;

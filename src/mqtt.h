@@ -2,16 +2,6 @@
 #include <PubSubClient.h>
 #include <globals.h>
 
-// WiFi Credentials
-const char* ssid = "Chocolate";
-const char* password = "bunnymagpie0520";
-
-// MQTT Broker Settings
-const char* mqttServer = "192.168.86.35";  // Public Broker  
-const int mqttPort = 1883;
-const char* mqttUser = ""; // Optional
-const char* mqttPassword = ""; // Optional
-
 WiFiClient espClient;
 PubSubClient client(espClient);
 

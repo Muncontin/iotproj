@@ -1,9 +1,5 @@
 #include <painlessMesh.h>
 
-#define   MESH_SSID       "tootnetwork"
-#define   MESH_PASSWORD   "meshpotatoes"
-#define   MESH_PORT       5555
-
 // Prototypes
 void sendMessage(); 
 void receivedCallback(uint32_t from, String & msg);

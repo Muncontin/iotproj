@@ -630,7 +630,7 @@ void LoraMesher::sendHelloPacket() {
 
             // Create and send the packet
             RoutePacket* tx = PacketService::createRoutingPacket(
-                getLocalAddress(), &nodes[startIndex], nodesInThisPacket, RoleService::getRole(), meshBrokerIP
+                getLocalAddress(), &nodes[startIndex], nodesInThisPacket, RoleService::getRole(), meshBrokerIP, BLE_CONN_ID
             );
 
             setPackedForSend(reinterpret_cast<Packet<uint8_t>*>(tx), DEFAULT_PRIORITY + 1);
@@ -644,6 +644,37 @@ void LoraMesher::sendHelloPacket() {
         vTaskDelay(HELLO_PACKETS_DELAY * 1000 / portTICK_PERIOD_MS);
     }
 }
+
+// Helper function to send hello packets immediately
+void LoraMesher::sendHelloPacketNow() {
+    NetworkNode* nodes = RoutingTableService::getAllNetworkNodes();
+    size_t numOfNodes = RoutingTableService::routingTableSize();
+
+    size_t maxNodesPerPacket = (PacketFactory::getMaxPacketSize() - sizeof(RoutePacket)) / sizeof(NetworkNode);
+    size_t numPackets = (numOfNodes + maxNodesPerPacket - 1) / maxNodesPerPacket;
+    numPackets = (numPackets == 0) ? 1 : numPackets;
+
+    for (size_t i = 0; i < numPackets; ++i) {
+        size_t startIndex = i * maxNodesPerPacket;
+        size_t endIndex = std::min(startIndex + maxNodesPerPacket, numOfNodes);
+        size_t nodesInThisPacket = endIndex - startIndex;
+
+        RoutePacket* tx = PacketService::createRoutingPacket(
+            getLocalAddress(),
+            &nodes[startIndex],
+            nodesInThisPacket,
+            RoleService::getRole(),
+            meshBrokerIP,
+            BLE_CONN_ID
+        );
+
+        setPackedForSend(reinterpret_cast<Packet<uint8_t>*>(tx), DEFAULT_PRIORITY + 1);
+    }
+
+    if (numOfNodes > 0)
+        delete[] nodes;
+}
+
 
 void LoraMesher::processPackets() {
     ESP_LOGV(LM_TAG, "Process routine started");

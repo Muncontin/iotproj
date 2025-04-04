@@ -93,7 +93,7 @@ uint8_t PacketService::getHeaderLength(uint8_t type) {
     return 0;
 }
 
-RoutePacket* PacketService::createRoutingPacket(uint16_t localAddress, NetworkNode* nodes, size_t numOfNodes, uint8_t nodeRole, IPAddress brokerIP) {
+RoutePacket* PacketService::createRoutingPacket(uint16_t localAddress, NetworkNode* nodes, size_t numOfNodes, uint8_t nodeRole, IPAddress brokerIP, uint16_t ble_conn_id) {
     size_t routingSizeInBytes = numOfNodes * sizeof(NetworkNode);
 
     RoutePacket* routePacket = PacketFactory::createPacket<RoutePacket>(reinterpret_cast<uint8_t*>(nodes), routingSizeInBytes);
@@ -103,6 +103,7 @@ RoutePacket* PacketService::createRoutingPacket(uint16_t localAddress, NetworkNo
     routePacket->packetSize = routingSizeInBytes + sizeof(RoutePacket);
     routePacket->nodeRole = nodeRole;
     routePacket->brokerIP = brokerIP;
+    routePacket->ble_conn_id = ble_conn_id;
 
     return routePacket;
 }

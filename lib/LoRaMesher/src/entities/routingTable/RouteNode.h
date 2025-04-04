@@ -25,7 +25,7 @@ public:
      * @brief Next hop to send the message
      *
      */
-    uint16_t via = 0;
+    uint16_t via = 0; 
 
     /**
      * @brief SNR from received packets. Only available nodes at 1 hop.

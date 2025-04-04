@@ -21,6 +21,11 @@ public:
     IPAddress brokerIP;
 
     /**
+     * @brief BLE connection ID
+     */
+    uint16_t ble_conn_id;
+
+    /**
      * @brief Network nodes
      *
      */

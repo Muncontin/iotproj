@@ -105,7 +105,7 @@ public:
      * @param nodeRole Role of the node
      * @return RoutePacket*
      */
-    static RoutePacket* createRoutingPacket(uint16_t localAddress, NetworkNode* nodes, size_t numOfNodes, uint8_t nodeRole, IPAddress brokerIP);
+    static RoutePacket* createRoutingPacket(uint16_t localAddress, NetworkNode* nodes, size_t numOfNodes, uint8_t nodeRole, IPAddress brokerIP, uint16_t ble_conn_id);
 
     /**
      * @brief Create a Application Packet

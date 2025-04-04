@@ -1,17 +1,17 @@
 #include <Arduino.h>
 #include "driver/gpio.h"  // Include the GPIO driver header
-#include "mqtt.h"
+
 #include "ble.h"
+#include "mqtt.h"
 #include "pmesh.h"
 
-//Using LILYGO TTGO T-BEAM v1.1 
+//TODO: dynamically include packages based on the role of the node
+
+
+//Using LILYGO TTGO T-BEAM v1.2
 #define BOARD_LED   4
 #define LED_ON      LOW
 #define LED_OFF     HIGH
-
-LoraMesher& radio = LoraMesher::getInstance();
-RoutingTableService routingtableService;
-IPAddress brokerIP;
 
 uint32_t dataCounter = 0;
 struct dataPacket {
@@ -32,42 +32,42 @@ void led_Flash(uint16_t flashes, uint16_t delaymS) {
 }
 
 // Gets nodes from routing table that are known as ROLE 1 NODES.
-void printGatewayNodes() {
-    NetworkNode* nodes = routingtableService.getAllNetworkNodes();
+// void printGatewayNodes() {
+//     NetworkNode* nodes = routingtableService.getAllNetworkNodes();
 
-    if (!nodes) {
-        Serial.println("Routing table is empty.");
-        return;
-    }
+//     if (!nodes) {
+//         Serial.println("Routing table is empty.");
+//         return;
+//     }
 
-    int routingSize = routingtableService.routingTableSize();
-    Serial.println("Nodes with Role ID 1:");
-    Serial.println("-----------------------------------------");
+//     int routingSize = routingtableService.routingTableSize();
+//     Serial.println("Nodes with Role ID 1:");
+//     Serial.println("-----------------------------------------");
 
-    bool found = false;
+//     bool found = false;
 
-    for (int i = 0; i < routingSize; i++) {
-        if (nodes[i].role == 1) {
-            IPAddress ip = nodes[i].mqttBrokerIP;
+//     for (int i = 0; i < routingSize; i++) {
+//         if (nodes[i].role == 1) {
+//             IPAddress ip = nodes[i].mqttBrokerIP;
 
-            Serial.printf(
-                "%d | Address: %04X | Hops: %d | Role: %d | Broker IP: %d.%d.%d.%d\n",
-                i,
-                nodes[i].address,
-                nodes[i].metric,
-                nodes[i].role,
-                ip[0], ip[1], ip[2], ip[3]
-            );
-            found = true;
-        }
-    }
+//             Serial.printf(
+//                 "%d | Address: %04X | Hops: %d | Role: %d | Broker IP: %d.%d.%d.%d\n",
+//                 i,
+//                 nodes[i].address,
+//                 nodes[i].metric,
+//                 nodes[i].role,
+//                 ip[0], ip[1], ip[2], ip[3]
+//             );
+//             found = true;
+//         }
+//     }
 
-    if (!found) {
-        Serial.println("No nodes with Role ID 1 found.");
-    }
+//     if (!found) {
+//         Serial.println("No nodes with Role ID 1 found.");
+//     }
 
-    delete[] nodes;
-}
+//     delete[] nodes;
+// }
 
 void sendMessageToRole1Nodes(const String& message) {
     NetworkNode* nodes = routingtableService.getAllNetworkNodes();
@@ -203,7 +203,7 @@ void setupLoraMesher() {
     // Initialize LoRaMesher
     radio.begin(config);
 
-    RoleService::setRole(0);
+    RoleService::setRole(meshMode); // Set the role of the node
     createReceiveMessages();
 
     // Start LoRaMesher
@@ -223,8 +223,31 @@ void setup() {
     pinMode(BOARD_LED, OUTPUT); //setup pin as output for indicator LED
     led_Flash(2, 125);          //two quick LED flashes to indicate program start
     setupLoraMesher();
-    mqttSetup();
-    setupBLEServer();
+
+    // Todo: Implement dynamic setups based on what role is selected - Test each scenario
+    if (meshMode == ROLE_LORA_BLE) {
+        Serial.println("Setting up BLE only");
+        setupBLEServer();
+    } else if (meshMode == ROLE_LORA_BLE_MQTT) {
+        Serial.println("Setting up BLE + MQTT");
+        mqttSetup();
+        setupBLEServer();
+    } else if (meshMode == ROLE_LORA_BLE_MESH) {
+        Serial.println("Setting up BLE + PainlessMesh");
+        setupBLEServer();
+        pMeshSetup();
+    } else if (meshMode == ROLE_LORA_MQTT) {
+        Serial.println("Setting up BLE + MQTT + PainlessMesh");
+        mqttSetup();
+    } else if (meshMode == ROLE_LORA_BLE_MESH) {
+        Serial.println("Setting up BLE + PainlessMesh");
+        pMeshSetup();
+    } else if (meshMode == ROLE_LORA_ONLY) {
+        Serial.println("Setting up Lora only");
+    } else {
+        Serial.println("Invalid role selected. Please select a valid role.");
+        return;
+    }
 }
 
 
@@ -236,8 +259,8 @@ void loop() {
         radio.createPacketAndSend(BROADCAST_ADDR, helloPacket, 1);
         //sendMessageToRole1Nodes("This is a directed message to all role 1 nodes");
 
-        printGatewayNodes();
-
+        RoutingTableService::printRoutingTable();
+        
         //Verifies if MQTT broker is connected.
         if (!client.connected()) {
             reconnect();

@@ -34,12 +34,23 @@ public:
      */
     IPAddress mqttBrokerIP = IPAddress(0, 0, 0, 0);
 
+    /**
+     * @brief IP address of the MQTT broker associated with this node
+     */
+    uint16_t ble_conn_id = 0;
+
     NetworkNode() {};
 
+    // With address and metric (Standard)
     NetworkNode(uint16_t address_, uint8_t metric_, uint8_t role_): address(address_), metric(metric_), role(role_) {};
 
+    // With IP address (optional BLE conn ID)
     NetworkNode(uint16_t address_, uint8_t metric_, uint8_t role_, IPAddress brokerIP)
         : address(address_), metric(metric_), role(role_), mqttBrokerIP(brokerIP) {}
+
+    // With BLE conn ID and IP address 
+    NetworkNode(uint16_t address_, uint8_t metric_, uint8_t role_, IPAddress brokerIP, uint16_t ble_conn_id_)
+    : address(address_), metric(metric_), role(role_), mqttBrokerIP(brokerIP), ble_conn_id(ble_conn_id_) {}
 };
 
 #pragma pack()
