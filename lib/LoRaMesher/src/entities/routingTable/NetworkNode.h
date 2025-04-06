@@ -37,7 +37,7 @@ public:
     /**
      * @brief IP address of the MQTT broker associated with this node
      */
-    uint16_t ble_conn_id = 0;
+    uint8_t BLE_CONN_ID[6] = {0};  // initialize with zeros
 
     NetworkNode() {};
 
@@ -49,8 +49,10 @@ public:
         : address(address_), metric(metric_), role(role_), mqttBrokerIP(brokerIP) {}
 
     // With BLE conn ID and IP address 
-    NetworkNode(uint16_t address_, uint8_t metric_, uint8_t role_, IPAddress brokerIP, uint16_t ble_conn_id_)
-    : address(address_), metric(metric_), role(role_), mqttBrokerIP(brokerIP), ble_conn_id(ble_conn_id_) {}
+    NetworkNode(uint16_t address_, uint8_t metric_, uint8_t role_, IPAddress brokerIP, const uint8_t bleConnId_[6])
+        : address(address_), metric(metric_), role(role_), mqttBrokerIP(brokerIP) {
+        memcpy(BLE_CONN_ID, bleConnId_, 6);  // copy MAC address into class field
+    }
 };
 
 #pragma pack()

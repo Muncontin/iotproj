@@ -85,7 +85,7 @@ void RoutingTableService::processRoute(RoutePacket* p, int8_t receivedSNR) {
     ESP_LOGI(LM_TAG, "Received broker IP %s from %X", senderBrokerIP.toString().c_str(), p->src);
 
     // Create & process sender node (Node that sent this route update)
-    NetworkNode* receivedNode = new NetworkNode(p->src, 1, p->nodeRole, senderBrokerIP, p->ble_conn_id);
+    NetworkNode* receivedNode = new NetworkNode(p->src, 1, p->nodeRole, senderBrokerIP, p->BLE_CONN_ID);
     processRoute(p->src, receivedNode, senderBrokerIP);
     delete receivedNode;
 
@@ -146,10 +146,18 @@ void RoutingTableService::processRoute(uint16_t via, NetworkNode* node, IPAddres
             rNode->networkNode.mqttBrokerIP = brokerIP;
         }
 
-        if (getNextHop(node->address) == via && rNode->networkNode.ble_conn_id != node->ble_conn_id) {
-            ESP_LOGI(LM_TAG, "Updating BLE conn ID of %X to %u", node->address, node->ble_conn_id);
-            rNode->networkNode.ble_conn_id = node->ble_conn_id;
-        }        
+        // if (getNextHop(node->address) == via && rNode->networkNode.BLE_CONN_ID != node->BLE_CONN_ID) {
+        //     ESP_LOGI(LM_TAG, "Updating BLE conn ID of %X to %u", node->address, node->BLE_CONN_ID);
+        //     rNode->networkNode.BLE_CONN_ID = node->BLE_CONN_ID;
+        // }        
+
+        if (getNextHop(node->address) == via &&
+            memcmp(rNode->networkNode.BLE_CONN_ID, node->BLE_CONN_ID, 6) != 0) {
+
+            ESP_LOGI(LM_TAG, "Updating BLE conn ID of %X", node->address);
+            memcpy(rNode->networkNode.BLE_CONN_ID, node->BLE_CONN_ID, 6);
+        }
+
     }
 }
 
@@ -212,7 +220,7 @@ NetworkNode* RoutingTableService::getAllNetworkNodes() {
 }
 
 void RoutingTableService::resetTimeoutRoutingNode(RouteNode* node) {
-    node->timeout = millis() + DEFAULT_TIMEOUT * 1000;
+    node->timeout = millis() + DEFAULT_TIMEOUT * 1000; //originally 10 minutes
 }
 
 void RoutingTableService::printRoutingTable() {
@@ -226,30 +234,27 @@ void RoutingTableService::printRoutingTable() {
         do {
             RouteNode* node = routingTableList->getCurrent();
 
-            // ESP_LOGI(LM_TAG, "%d - %X via %X metric %d Role %d", position,
-            //     node->networkNode.address,
-            //     node->via,
-            //     node->networkNode.metric,
-            //     node->networkNode.role);
-
             IPAddress ip = node->networkNode.mqttBrokerIP;
+            uint8_t* mac = node->networkNode.BLE_CONN_ID;
+
             Serial.printf(
-                "%d | %04X | via %04X | metric %d | Role %d | Broker_IP %d.%d.%d.%d | BLE_Conn_ID %d\n",
+                "%d | %04X | via %04X | metric %d | Role %d | Broker_IP %d.%d.%d.%d | BLE_MAC %02X:%02X:%02X:%02X:%02X:%02X\n",
                 position,
                 node->networkNode.address,
                 node->via,
                 node->networkNode.metric,
                 node->networkNode.role,
                 ip[0], ip[1], ip[2], ip[3],
-                node->networkNode.ble_conn_id
+                mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]
             );
-            
+
             position++;
         } while (routingTableList->next());
     }
 
     routingTableList->releaseInUse();
 }
+
 
 void RoutingTableService::manageTimeoutRoutingTable() {
     ESP_LOGI(LM_TAG, "Checking routes timeout");

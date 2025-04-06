@@ -69,6 +69,87 @@ void led_Flash(uint16_t flashes, uint16_t delaymS) {
 //     delete[] nodes;
 // }
 
+void publishRoutingTableToMQTT() {
+    // if (!client.connected()) {
+    //     Serial.println("[MQTT] Not connected to broker.");
+    //     return;
+    // }
+
+    NetworkNode* nodes = routingtableService.getAllNetworkNodes();
+    if (!nodes) {
+        Serial.println("[MQTT] Routing table is empty.");
+        return;
+    }
+
+    JsonDocument doc;
+    //JsonArray table = doc["routing_table"].to<JsonArray>();
+    JsonArray table = doc.to<JsonArray>();
+
+    // === Local Node Info ===
+    JsonObject self = table.add<JsonObject>();
+    self["pos"] = "0";
+    self["address"] = String(radio.getLocalAddress(), HEX);
+    self["next-hop"] = String(radio.getLocalAddress(), HEX);
+    self["hop_count"] = "0";
+    self["role"] = "Self";
+    self["broker"] = meshBrokerIP.toString();
+
+    bool isBLEValid = false;
+    for (int b = 0; b < 6; b++) {
+        if (BLE_CONN_ID[b] != 0) {
+            isBLEValid = true;
+             break;
+        }
+    }
+
+    if (isBLEValid) {
+        char macStr[18];
+        snprintf(macStr, sizeof(macStr), "%02X:%02X:%02X:%02X:%02X:%02X",
+                 BLE_CONN_ID[0], BLE_CONN_ID[1], BLE_CONN_ID[2],
+                 BLE_CONN_ID[3], BLE_CONN_ID[4], BLE_CONN_ID[5]);
+        JsonArray selfBLE = self["BLE Devices"].to<JsonArray>();
+        selfBLE.add(macStr);
+    }
+
+    // === All Routing Table Nodes ===
+    int routingSize = routingtableService.routingTableSize();
+    for (int i = 0; i < routingSize; i++) {
+        JsonObject node = table.add<JsonObject>();
+        node["pos"] = String(i + 1);
+        node["address"] = String(nodes[i].address, HEX);
+        node["next-hop"] = String(routingtableService.getNextHop(nodes[i].address), HEX);
+        node["hop_count"] = String(nodes[i].metric);
+        node["role"] = "Role " + String(nodes[i].role);
+        node["broker"] = nodes[i].mqttBrokerIP.toString();
+
+        bool valid = false;
+        for (int b = 0; b < 6; b++) {
+            if (nodes[i].BLE_CONN_ID[b] != 0) {
+                valid = true;
+                break;
+            }
+        }
+
+        if (valid) {
+            char macStr[18];
+            snprintf(macStr, sizeof(macStr), "%02X:%02X:%02X:%02X:%02X:%02X",
+                     nodes[i].BLE_CONN_ID[0], nodes[i].BLE_CONN_ID[1], nodes[i].BLE_CONN_ID[2],
+                     nodes[i].BLE_CONN_ID[3], nodes[i].BLE_CONN_ID[4], nodes[i].BLE_CONN_ID[5]);
+
+            JsonArray bleList = node["BLE Devices"].to<JsonArray>();
+            bleList.add(macStr);
+        }
+    }
+
+    char buffer[1028];
+    size_t len = serializeJson(doc, buffer);
+    bool success = client.publish("network_status", buffer, true);
+
+    Serial.printf("[MQTT] Published routing table (%d bytes) to 'network_status': %s\n", len, success ? "success" : "failed");
+
+    delete[] nodes;
+}
+
 void sendMessageToRole1Nodes(const String& message) {
     NetworkNode* nodes = routingtableService.getAllNetworkNodes();
 
@@ -135,34 +216,96 @@ void printDataPacket(AppPacket<dataPacket>* packet) {
 }
 
 /**
- * @brief Function that process the received packets
+ * @brief Function that process the received packets. Updated to read raw payload
  *
  */
 void processReceivedPackets(void*) {
     for (;;) {
-        /* Wait for the notification of processReceivedPackets and enter blocking */
         ulTaskNotifyTake(pdPASS, portMAX_DELAY);
-        led_Flash(1, 100); //one quick LED flashes to indicate a packet has arrived
+        led_Flash(1, 100);
 
-        //Iterate through all the packets inside the Received User Packets Queue
         while (radio.getReceivedQueueSize() > 0) {
             Serial.println("ReceivedUserData_TaskHandle notify received");
             Serial.printf("Queue receiveUserData size: %d\n", radio.getReceivedQueueSize());
 
-            //Get the first element inside the Received User Packets Queue
-            AppPacket<dataPacket>* packet = radio.getNextAppPacket<dataPacket>();
+            AppPacket<uint8_t>* packet = radio.getNextAppPacket<uint8_t>();
+
+            // Convert payload to string
+            String msg;
+            for (uint32_t i = 0; i < packet->payloadSize; ++i) {
+                msg += (char)packet->payload[i];
+            }
 
             Serial.println("Data received:");
-            //Print the data packet
-            printDataPacket(packet);
+            Serial.println(msg);
+
+            // Parse JSON
+            StaticJsonDocument<256> doc;
+            DeserializationError err = deserializeJson(doc, msg);
+            if (err) {
+                Serial.println("Failed to parse JSON in received LoRa message.");
+                radio.deletePacket(packet);
+                continue;
+            }
+
+            // Extract values
+            String target = doc["address"] | "";
+            int deviceType = doc["end_device_type"] | -1;
+            String payload = doc["payload"] | "";
+
+            // Check if this node is the intended recipient
+            if (target.equalsIgnoreCase(String(radio.getLocalAddress(), HEX))) {
+                if (deviceType == 1) {  // BLE device
+                    Serial.printf("Forwarding payload to BLE device: %s\n", payload.c_str());
+
+                    NimBLEService* pSvc = pServer->getServiceByUUID("BAAD");
+                    if (pSvc) {
+                        NimBLECharacteristic* pChr = pSvc->getCharacteristic("F00D");
+                        if (pChr) {
+                            pChr->setValue(payload.c_str());
+                            pChr->notify();
+                        } else {
+                            Serial.println("BLE characteristic not found.");
+                        }
+                    } else {
+                        Serial.println("BLE service not found.");
+                    }
+                } 
+                else if (deviceType == 0) {  // MQTT end device
+                    if (client.connected()) {
+                        bool success = client.publish("to_dashboard", payload.c_str());
+                        Serial.printf("Published to MQTT: %s\n", success ? "success" : "failed");
+                    } else {
+                        Serial.println("MQTT client not connected, can't publish.");
+                    }
+                } 
+                else {
+                    Serial.println("Unknown device type, no forwarding action taken.");
+                }
+            } else {
+                Serial.println("Not the intended recipient. Ignoring.");
+            }
 
             printRoutingTable();
-
-            //Delete the packet when used. It is very important to call this function to release the memory of the packet.
             radio.deletePacket(packet);
         }
     }
 }
+
+
+
+
+
+void mqttTask(void* pvParameters) {
+    for (;;) {
+        if (!client.connected()) {
+            reconnect();
+        }
+        client.loop();
+        vTaskDelay(1000 / portTICK_PERIOD_MS);  // Wait 1s
+    }
+}
+
 
 TaskHandle_t receiveLoRaMessage_Handle = NULL;
 
@@ -223,8 +366,9 @@ void setup() {
     pinMode(BOARD_LED, OUTPUT); //setup pin as output for indicator LED
     led_Flash(2, 125);          //two quick LED flashes to indicate program start
     setupLoraMesher();
+    setupLocalAddress();
 
-    // Todo: Implement dynamic setups based on what role is selected - Test each scenario
+    // Todo: Implement dynamic setups based on what role is selected - Test each scenario (incomplete)
     if (meshMode == ROLE_LORA_BLE) {
         Serial.println("Setting up BLE only");
         setupBLEServer();
@@ -232,6 +376,7 @@ void setup() {
         Serial.println("Setting up BLE + MQTT");
         mqttSetup();
         setupBLEServer();
+
     } else if (meshMode == ROLE_LORA_BLE_MESH) {
         Serial.println("Setting up BLE + PainlessMesh");
         setupBLEServer();
@@ -248,24 +393,34 @@ void setup() {
         Serial.println("Invalid role selected. Please select a valid role.");
         return;
     }
+
+    xTaskCreate(
+        mqttTask,           // Task function
+        "MQTT Task",        // Name
+        4096,               // Stack size (in words, not bytes)
+        NULL,               // Parameter
+        1,                  // Priority
+        NULL                // Task handle (optional)
+    );
+    
 }
 
 
 void loop() {
     for (;;) {
-
-        Serial.printf("Send packet %d\n", dataCounter);
+        client.loop();
+        // Serial.printf("Send packet %d\n", dataCounter);
+        // dataCounter++;
         
-        radio.createPacketAndSend(BROADCAST_ADDR, helloPacket, 1);
+        // radio.createPacketAndSend(BROADCAST_ADDR, helloPacket, 1);
         //sendMessageToRole1Nodes("This is a directed message to all role 1 nodes");
 
         RoutingTableService::printRoutingTable();
-        
-        //Verifies if MQTT broker is connected.
-        if (!client.connected()) {
-            reconnect();
-        } 
-        client.loop();
+ 
+        publishRoutingTableToMQTT();
+        bleServerService();
+
+        radio.sendHelloPacketNow();
 
 
         //Wait 20 seconds to send the next packet

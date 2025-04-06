@@ -23,7 +23,7 @@ public:
     /**
      * @brief BLE connection ID
      */
-    uint16_t ble_conn_id;
+    uint8_t BLE_CONN_ID[6] = {0};  // BLE MAC (6 bytes)
 
     /**
      * @brief Network nodes
@@ -36,7 +36,13 @@ public:
      *
      * @return size_t Number of Network Nodes inside the packet
      */
-    size_t getNetworkNodesSize() { return (this->packetSize - sizeof(RoutePacket)) / sizeof(NetworkNode); }
+    //size_t getNetworkNodesSize() { return (this->packetSize - sizeof(RoutePacket)) / sizeof(NetworkNode); }
+
+    size_t getNetworkNodesSize() {
+        // Correct: subtract only the fixed part (up to the FAM)
+        size_t baseSize = sizeof(PacketHeader) + sizeof(nodeRole) + sizeof(brokerIP) + sizeof(BLE_CONN_ID);
+        return (this->packetSize - baseSize) / sizeof(NetworkNode);
+    }
 };
 
 #pragma pack()
