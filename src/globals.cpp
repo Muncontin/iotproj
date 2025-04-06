@@ -13,13 +13,13 @@ void setupLocalAddress() {
     sprintf(bleServerName, "BLE-%04X", addr);  // Optional custom format for BLE name
 }
 
-
+// ----------------------------------------------------------------EDIT CONFIGURATION DETAILS HERE-------------------------------------------------------------------
 // WiFi Credentials
 const char* ssid = "";
 const char* password = "";
 
 // MQTT Broker Settings     
-const char* mqttServer = "192.168.86.153";  // Your broker IP address 
+const char* mqttServer = "192.168.86.33";  // Your broker IP address 
 const int mqttPort = 1883;
 const char* mqttUser = ""; // Optional
 const char* mqttPassword = ""; // Optional
@@ -34,13 +34,15 @@ const char* MESSAGE_CHAR_UUID  = "01234567-0123-4567-89ab-0123456789cd";
 uint8_t BLE_CONN_ID[6]; //Default value for BLE connection ID
 
 
-//painlessmesh settings
+//painlessmesh settings - NOT IMPLEMENTED YET
 const char* MESH_SSID     = "tootnetwork";
 const char* MESH_PASSWORD = "meshpotatoes";
 const uint16_t MESH_PORT  = 5555;
 
 //Setting LoRa node roles
 NodeRoles meshMode = ROLE_LORA_BLE_MQTT; // 0 = LORA_ONLY, 1 = LORA + MQTT, 2 = LORA + BLE, 3 = LORA + BLE + MQTT, 4 = LORA + BLE + PainlessMesh
+
+// ----------------------------------------------------------------EDIT CONFIGURATION DETAILS HERE-------------------------------------------------------------------
 
 
 

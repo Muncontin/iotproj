@@ -1,6 +1,6 @@
 [
     {
-        "id": "8661d79bb568c823",
+        "id": "09a6d2bc18a9577a",
         "type": "tab",
         "label": "Flow 1",
         "disabled": false,
@@ -8,9 +8,9 @@
         "env": []
     },
     {
-        "id": "41e179be98f8702f",
+        "id": "dd6611e2b162c883",
         "type": "mqtt in",
-        "z": "8661d79bb568c823",
+        "z": "09a6d2bc18a9577a",
         "name": "",
         "topic": "network_status",
         "qos": "2",
@@ -24,16 +24,17 @@
         "y": 440,
         "wires": [
             [
-                "67952045ab8b0cec",
-                "66cca3fc51a2500a",
-                "f154fcb045d9502d"
+                "9b1f923a21fabe5e",
+                "4fe7e7b5b3312e2b",
+                "a3724a9eb98812bc",
+                "69b9c6b7d7df15fa"
             ]
         ]
     },
     {
-        "id": "f1b1cf4c10e4f0b1",
+        "id": "4b8fa8b4dad50ad4",
         "type": "mqtt out",
-        "z": "8661d79bb568c823",
+        "z": "09a6d2bc18a9577a",
         "name": "",
         "topic": "network_status",
         "qos": "",
@@ -49,9 +50,9 @@
         "wires": []
     },
     {
-        "id": "8b4896f7ece5d141",
+        "id": "69b9c6b7d7df15fa",
         "type": "debug",
-        "z": "8661d79bb568c823",
+        "z": "09a6d2bc18a9577a",
         "name": "debug 1",
         "active": true,
         "tosidebar": true,
@@ -61,14 +62,14 @@
         "targetType": "msg",
         "statusVal": "",
         "statusType": "auto",
-        "x": 560,
-        "y": 440,
+        "x": 440,
+        "y": 480,
         "wires": []
     },
     {
-        "id": "89ae9e04d8b4dff4",
+        "id": "fe7709484c22f7c6",
         "type": "mqtt out",
-        "z": "8661d79bb568c823",
+        "z": "09a6d2bc18a9577a",
         "name": "BLE Target Output Node",
         "topic": "from_dashboard",
         "qos": "",
@@ -79,14 +80,14 @@
         "correl": "",
         "expiry": "",
         "broker": "1cb494e37798adb3",
-        "x": 1970,
-        "y": 660,
+        "x": 2090,
+        "y": 520,
         "wires": []
     },
     {
-        "id": "fc8c4f6ab7abda19",
+        "id": "b1c45c7c02d513b9",
         "type": "inject",
-        "z": "8661d79bb568c823",
+        "z": "09a6d2bc18a9577a",
         "name": "Standard 5 Node Message",
         "props": [
             {
@@ -108,14 +109,14 @@
         "y": 80,
         "wires": [
             [
-                "f1b1cf4c10e4f0b1"
+                "4b8fa8b4dad50ad4"
             ]
         ]
     },
     {
-        "id": "9d846e8da805c087",
+        "id": "52e329c6a7b14e90",
         "type": "debug",
-        "z": "8661d79bb568c823",
+        "z": "09a6d2bc18a9577a",
         "name": "debug 2",
         "active": true,
         "tosidebar": true,
@@ -130,9 +131,9 @@
         "wires": []
     },
     {
-        "id": "ff0a1c48587df6b5",
+        "id": "208ca6fb7cef344d",
         "type": "function",
-        "z": "8661d79bb568c823",
+        "z": "09a6d2bc18a9577a",
         "name": "Converts the BLE devices section into a set of records ",
         "func": "let record = msg.payload; // Expecting a network status record with/without BLE\nlet outputMsgs = [];\nlet ble_payload = [];\n\n// Process each routing record\n// If BLE Devices exist split it from the rest of the record and then send it \nif (record[\"BLE Devices\"]) {\n    // add broker to device table\n    if (record[\"broker\"] !== \"0.0.0.0\") {\n        ble_payload.push({\n            name: \"MQTT Broker\",\n            device: record[\"broker\"],\n            address: record[\"address\"]\n            });\n    }\n\n    for (const device of record[\"BLE Devices\"]) {\n        ble_payload.push({\n            name: `BLE`,\n            device: device,\n            address: record[\"address\"]\n        });\n    }\n\n    // ble_payload.push({\n    //         name: `BLE`,\n    //         device: record[\"BLE Devices\"],\n    //         address: record[\"address\"]\n    // });\n\n    outputMsgs.push({\n        topic: `ble_${record.address}`,\n        payload: ble_payload\n    });\n    \n    delete record[\"BLE Devices\"];   // removes BLE device from original set\n} else {\n    outputMsgs.push({\n        topic: `ble_${record.address}`,\n        payload: []\n    })\n}\n// if broker is 0.0.0.0, it is missing \nif (record[\"broker\"] === \"0.0.0.0\") {\n    record[\"broker_status\"] = \"Offline\";\n} else {\n    record[\"broker_status\"] = \"Online\";\n}\n\noutputMsgs.push({\n    topic: `status_${record.address}`,\n    payload: record\n});\n\n// Return messages to multiple outputs\nreturn [outputMsgs];",
         "outputs": 1,
@@ -145,16 +146,16 @@
         "y": 320,
         "wires": [
             [
-                "42df3bf7e4059a6b",
-                "df93769b7c631a17",
-                "adf62ccba3cbac54"
+                "025a024b7205bb63",
+                "37e227f996d5d3b2",
+                "2e72b387d2d07324"
             ]
         ]
     },
     {
-        "id": "42df3bf7e4059a6b",
+        "id": "025a024b7205bb63",
         "type": "switch",
-        "z": "8661d79bb568c823",
+        "z": "09a6d2bc18a9577a",
         "name": "BLE Address Splitter",
         "property": "topic",
         "propertyType": "msg",
@@ -186,30 +187,30 @@
         "checkall": "true",
         "repair": false,
         "outputs": 5,
-        "x": 1000,
-        "y": 660,
+        "x": 1100,
+        "y": 520,
         "wires": [
             [
-                "5baa6db67c836ef6"
+                "d91dba7b4446ccb3"
             ],
             [
-                "af605fe4a71dcce9"
+                "b8d47d1e31641815"
             ],
             [
-                "c91bd9d6b431cc27"
+                "c947a368c1a3d8d8"
             ],
             [
-                "8f8f0866fe69d39a"
+                "c70faf5851a01522"
             ],
             [
-                "29222ac77bf9dfe4"
+                "73fe5773460ad388"
             ]
         ]
     },
     {
-        "id": "29222ac77bf9dfe4",
+        "id": "73fe5773460ad388",
         "type": "debug",
-        "z": "8661d79bb568c823",
+        "z": "09a6d2bc18a9577a",
         "name": "debug 4",
         "active": true,
         "tosidebar": true,
@@ -219,14 +220,14 @@
         "targetType": "msg",
         "statusVal": "",
         "statusType": "auto",
-        "x": 1600,
-        "y": 820,
+        "x": 1480,
+        "y": 860,
         "wires": []
     },
     {
-        "id": "66cca3fc51a2500a",
+        "id": "9b1f923a21fabe5e",
         "type": "split",
-        "z": "8661d79bb568c823",
+        "z": "09a6d2bc18a9577a",
         "name": "",
         "splt": "\\n",
         "spltType": "str",
@@ -239,15 +240,14 @@
         "y": 400,
         "wires": [
             [
-                "ff0a1c48587df6b5",
-                "8b4896f7ece5d141"
+                "208ca6fb7cef344d"
             ]
         ]
     },
     {
-        "id": "df93769b7c631a17",
+        "id": "37e227f996d5d3b2",
         "type": "debug",
-        "z": "8661d79bb568c823",
+        "z": "09a6d2bc18a9577a",
         "name": "All BLE/Status Records",
         "active": true,
         "tosidebar": true,
@@ -257,14 +257,14 @@
         "targetType": "full",
         "statusVal": "",
         "statusType": "auto",
-        "x": 950,
-        "y": 200,
+        "x": 1050,
+        "y": 80,
         "wires": []
     },
     {
-        "id": "adf62ccba3cbac54",
+        "id": "2e72b387d2d07324",
         "type": "switch",
-        "z": "8661d79bb568c823",
+        "z": "09a6d2bc18a9577a",
         "name": "Status Address Splitter",
         "property": "topic",
         "propertyType": "msg",
@@ -296,29 +296,29 @@
         "checkall": "true",
         "repair": false,
         "outputs": 5,
-        "x": 1000,
-        "y": 340,
+        "x": 1100,
+        "y": 220,
         "wires": [
             [
-                "8f9c9bb11d40f397"
+                "3a3e3b57f5ab8987"
             ],
             [
-                "0244913fe66bbd9c"
+                "063e96a60d58ecce"
             ],
             [
-                "68c05372f5e7875b"
+                "e01ed2b09dda2c69"
             ],
             [
-                "58e157563650814e"
+                "1832b07a0e3e011d"
             ],
             []
         ]
     },
     {
-        "id": "67952045ab8b0cec",
+        "id": "91381bfaf442e7a9",
         "type": "ui-table",
-        "z": "8661d79bb568c823",
-        "group": "3801941c44d8826c",
+        "z": "09a6d2bc18a9577a",
+        "group": "e92834523671ca8a",
         "name": "Combined Nodes Routing Table",
         "label": "Node Routing Table",
         "order": 1,
@@ -382,16 +382,16 @@
         "mobileBreakpoint": "sm",
         "mobileBreakpointType": "defaults",
         "action": "replace",
-        "x": 430,
-        "y": 800,
+        "x": 930,
+        "y": 700,
         "wires": [
             []
         ]
     },
     {
-        "id": "5baa6db67c836ef6",
+        "id": "d91dba7b4446ccb3",
         "type": "ui-table",
-        "z": "8661d79bb568c823",
+        "z": "09a6d2bc18a9577a",
         "group": "a038e927d4093482",
         "name": "Lilygo 1234 Devices Panel",
         "label": "Connected Devices",
@@ -432,19 +432,19 @@
         "mobileBreakpoint": "sm",
         "mobileBreakpointType": "defaults",
         "action": "replace",
-        "x": 1340,
-        "y": 560,
+        "x": 1420,
+        "y": 420,
         "wires": [
             [
-                "29222ac77bf9dfe4",
-                "2127e44a6bf605f2"
+                "73fe5773460ad388",
+                "0d581ac8f01c6ab6"
             ]
         ]
     },
     {
-        "id": "8f9c9bb11d40f397",
+        "id": "3a3e3b57f5ab8987",
         "type": "ui-markdown",
-        "z": "8661d79bb568c823",
+        "z": "09a6d2bc18a9577a",
         "group": "a038e927d4093482",
         "name": "Lilygo 1234 Status",
         "order": 1,
@@ -452,16 +452,16 @@
         "height": 0,
         "content": "# Node {{msg.payload.address}} Information\n- Address: {{msg.payload.address}}\n- Next Hop: {{msg.payload[\"next-hop\"]}}\n- Hop Count: {{msg.payload.hop_count}}\n- Role: {{msg.payload.role}}\n- Broker: {{msg.payload.broker}}\n- Broker Status: {{msg.payload.broker_status}}\n# ",
         "className": "",
-        "x": 1290,
-        "y": 240,
+        "x": 1390,
+        "y": 120,
         "wires": [
             []
         ]
     },
     {
-        "id": "2127e44a6bf605f2",
+        "id": "0d581ac8f01c6ab6",
         "type": "function",
-        "z": "8661d79bb568c823",
+        "z": "09a6d2bc18a9577a",
         "name": "Convert table address to mqtt payload",
         "func": "let msg_payload = {};\n\n// set payload fields\nmsg_payload[\"address\"] = msg.payload[\"address\"];\nif (msg.payload[\"name\"] === \"MQTT Broker\"){\n    msg_payload[\"end_device_type\"] = 0;\n} else {\n    msg_payload[\"end_device_type\"] = 1;\n}\nmsg_payload[\"device_id\"] = msg.payload.node;\nmsg_payload[\"payload\"] = \"hallo\";\n// Add current time (ISO format)\nmsg_payload[\"time\"] = new Date().toISOString();\n\nreturn {\n    topic: \"general\",\n    payload: msg_payload\n};",
         "outputs": 1,
@@ -470,36 +470,36 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 1670,
-        "y": 620,
+        "x": 1790,
+        "y": 520,
         "wires": [
             [
-                "89ae9e04d8b4dff4"
+                "fe7709484c22f7c6"
             ]
         ]
     },
     {
-        "id": "0244913fe66bbd9c",
+        "id": "063e96a60d58ecce",
         "type": "ui-markdown",
-        "z": "8661d79bb568c823",
-        "group": "6d19cc6765961b5e",
+        "z": "09a6d2bc18a9577a",
+        "group": "619b22480b24dccb",
         "name": "Lilygo 4321 Status",
         "order": 1,
         "width": 0,
         "height": 0,
         "content": "# Node {{msg.payload.address}} Information\n- Address: {{msg.payload.address}}\n- Next Hop: {{msg.payload[\"next-hop\"]}}\n- Hop Count: {{msg.payload.hop_count}}\n- Role: {{msg.payload.role}}\n- Broker: {{msg.payload.broker}}\n- Broker Status: {{msg.payload.broker_status}}\n# ",
         "className": "",
-        "x": 1290,
-        "y": 300,
+        "x": 1390,
+        "y": 180,
         "wires": [
             []
         ]
     },
     {
-        "id": "af605fe4a71dcce9",
+        "id": "b8d47d1e31641815",
         "type": "ui-table",
-        "z": "8661d79bb568c823",
-        "group": "6d19cc6765961b5e",
+        "z": "09a6d2bc18a9577a",
+        "group": "619b22480b24dccb",
         "name": "Lilygo 4321 Devices Panel",
         "label": "Connected Devices",
         "order": 2,
@@ -539,39 +539,39 @@
         "mobileBreakpoint": "sm",
         "mobileBreakpointType": "defaults",
         "action": "replace",
-        "x": 1340,
-        "y": 620,
+        "x": 1420,
+        "y": 480,
         "wires": [
             [
-                "2127e44a6bf605f2"
+                "0d581ac8f01c6ab6"
             ]
         ]
     },
     {
-        "id": "f154fcb045d9502d",
+        "id": "b3f0b0d796549477",
         "type": "function",
-        "z": "8661d79bb568c823",
+        "z": "09a6d2bc18a9577a",
         "name": "Get all devices ",
-        "func": "let deviceList = [];\nlet outputMsg = [];\n\nfor (const node of msg.payload) {\n    if (node[\"BLE Devices\"]) {\n        // add broker to device table\n        if (node[\"broker\"] !== \"0.0.0.0\") {\n            deviceList.push({\n                name: \"MQTT Broker\",\n                device: node[\"broker\"],\n                address: node[\"address\"]\n                });\n        }\n        // add device to table\n        for (const device of node[\"BLE Devices\"]) {\n            deviceList.push({\n                name: `BLE`,\n                device: device,\n                address: node[\"address\"]\n            });\n        }\n    }\n}\noutputMsg.push({\n    topic: `devices`,\n    payload: deviceList\n});\n\n\nreturn outputMsg;",
+        "func": "let deviceList = [];\nlet outputMsg = [];\n\nfor (const node of msg.payload) {\n    const address = node[\"address\"] || \"unknown\";\n\n    // Add broker to device table if valid\n    if (node[\"broker\"] && node[\"broker\"] !== \"0.0.0.0\") {\n        deviceList.push({\n            name: \"MQTT Broker\",\n            device: node[\"broker\"],\n            address: address\n        });\n    }\n\n    // Add BLE devices to table\n    if (Array.isArray(node[\"BLE Devices\"])) {\n        for (const device of node[\"BLE Devices\"]) {\n            deviceList.push({\n                name: \"BLE\",\n                device: device,\n                address: address\n            });\n        }\n    }\n}\n\noutputMsg.push({\n    topic: \"devices\",\n    payload: deviceList\n});\n\nreturn outputMsg;\n",
         "outputs": 1,
         "timeout": 0,
         "noerr": 0,
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 420,
-        "y": 680,
+        "x": 680,
+        "y": 600,
         "wires": [
             [
-                "22908fefad885b97"
+                "1ad02813dd068bc5"
             ]
         ]
     },
     {
-        "id": "c91bd9d6b431cc27",
+        "id": "c947a368c1a3d8d8",
         "type": "ui-table",
-        "z": "8661d79bb568c823",
-        "group": "b09206f74670c8ef",
+        "z": "09a6d2bc18a9577a",
+        "group": "c9e128aa2ab502c6",
         "name": "Lilygo A9F0 Devices Panel",
         "label": "Connected Devices",
         "order": 2,
@@ -611,19 +611,19 @@
         "mobileBreakpoint": "sm",
         "mobileBreakpointType": "defaults",
         "action": "replace",
-        "x": 1340,
-        "y": 680,
+        "x": 1420,
+        "y": 540,
         "wires": [
             [
-                "2127e44a6bf605f2"
+                "0d581ac8f01c6ab6"
             ]
         ]
     },
     {
-        "id": "8f8f0866fe69d39a",
+        "id": "c70faf5851a01522",
         "type": "ui-table",
-        "z": "8661d79bb568c823",
-        "group": "81fcd503e2dadc87",
+        "z": "09a6d2bc18a9577a",
+        "group": "243ed2f1bc512451",
         "name": "Lilygo A9F0 Devices Panel",
         "label": "Connected Devices",
         "order": 2,
@@ -663,54 +663,54 @@
         "mobileBreakpoint": "sm",
         "mobileBreakpointType": "defaults",
         "action": "replace",
-        "x": 1340,
-        "y": 740,
+        "x": 1420,
+        "y": 600,
         "wires": [
             [
-                "29222ac77bf9dfe4",
-                "2127e44a6bf605f2"
+                "73fe5773460ad388",
+                "0d581ac8f01c6ab6"
             ]
         ]
     },
     {
-        "id": "68c05372f5e7875b",
+        "id": "e01ed2b09dda2c69",
         "type": "ui-markdown",
-        "z": "8661d79bb568c823",
-        "group": "b09206f74670c8ef",
+        "z": "09a6d2bc18a9577a",
+        "group": "c9e128aa2ab502c6",
         "name": "Lilygo A9F0 Status",
         "order": 1,
         "width": 0,
         "height": 0,
         "content": "# Node {{msg.payload.address}} Information\n- Address: {{msg.payload.address}}\n- Next Hop: {{msg.payload[\"next-hop\"]}}\n- Hop Count: {{msg.payload.hop_count}}\n- Role: {{msg.payload.role}}\n- Broker: {{msg.payload.broker}}\n- Broker Status: {{msg.payload.broker_status}}\n# ",
         "className": "",
-        "x": 1290,
-        "y": 360,
+        "x": 1390,
+        "y": 240,
         "wires": [
             []
         ]
     },
     {
-        "id": "58e157563650814e",
+        "id": "1832b07a0e3e011d",
         "type": "ui-markdown",
-        "z": "8661d79bb568c823",
-        "group": "81fcd503e2dadc87",
+        "z": "09a6d2bc18a9577a",
+        "group": "243ed2f1bc512451",
         "name": "Lilygo C001 Status",
         "order": 1,
         "width": 0,
         "height": 0,
         "content": "# Node {{msg.payload.address}} Information\n- Address: {{msg.payload.address}}\n- Next Hop: {{msg.payload[\"next-hop\"]}}\n- Hop Count: {{msg.payload.hop_count}}\n- Role: {{msg.payload.role}}\n- Broker: {{msg.payload.broker}}\n- Broker Status: {{msg.payload.broker_status}}\n# ",
         "className": "",
-        "x": 1290,
-        "y": 420,
+        "x": 1390,
+        "y": 300,
         "wires": [
             []
         ]
     },
     {
-        "id": "22908fefad885b97",
+        "id": "1ad02813dd068bc5",
         "type": "ui-table",
-        "z": "8661d79bb568c823",
-        "group": "3801941c44d8826c",
+        "z": "09a6d2bc18a9577a",
+        "group": "e92834523671ca8a",
         "name": "All Devices Panel",
         "label": "Connected Devices",
         "order": 2,
@@ -758,18 +758,18 @@
         "mobileBreakpoint": "sm",
         "mobileBreakpointType": "defaults",
         "action": "replace",
-        "x": 990,
-        "y": 840,
+        "x": 950,
+        "y": 600,
         "wires": [
             [
-                "2127e44a6bf605f2"
+                "0d581ac8f01c6ab6"
             ]
         ]
     },
     {
-        "id": "fba3ecc8defe5496",
+        "id": "8f7abceb9ebd54d8",
         "type": "mqtt in",
-        "z": "8661d79bb568c823",
+        "z": "09a6d2bc18a9577a",
         "name": "",
         "topic": "from_dashboard",
         "qos": "2",
@@ -783,15 +783,15 @@
         "y": 940,
         "wires": [
             [
-                "9d846e8da805c087",
-                "045448432e6a8ca7"
+                "52e329c6a7b14e90",
+                "6e93c1c8b7177a41"
             ]
         ]
     },
     {
-        "id": "045448432e6a8ca7",
+        "id": "6e93c1c8b7177a41",
         "type": "function",
-        "z": "8661d79bb568c823",
+        "z": "09a6d2bc18a9577a",
         "name": "Convert incoming ping into readable data",
         "func": "if (msg.payload[\"end_device_type\"] === 1){\n    msg.payload[\"end_device_type\"] = \"BLE Device\";\n} else {\n    msg.payload[\"end_device_type\"] = \"Broker\";\n}\n\nif (msg.payload[\"time\"]){\n    let date = new Date(msg.payload[\"time\"]);\n    // Format: DD MMM YYYY, HH:mm:ss\n    let formattedTime = date.toLocaleString('en-GB', {\n        day: '2-digit',\n        month: 'short',\n        year: 'numeric',\n        hour: '2-digit',\n        minute: '2-digit',\n        second: '2-digit',\n        hour12: false\n    });\n\n    msg.payload[\"time\"] = formattedTime;\n}\nreturn msg;",
         "outputs": 1,
@@ -804,18 +804,18 @@
         "y": 940,
         "wires": [
             [
-                "6fc73f028b21d5b2"
+                "5fe73c7353141d2a"
             ]
         ]
     },
     {
-        "id": "6fc73f028b21d5b2",
+        "id": "5fe73c7353141d2a",
         "type": "ui-table",
-        "z": "8661d79bb568c823",
-        "group": "0c435008c91c72ec",
+        "z": "09a6d2bc18a9577a",
+        "group": "6a3ce8c651de3aef",
         "name": "Incoming Messages Display Table",
         "label": "Incoming Messages",
-        "order": 0,
+        "order": 1,
         "width": 0,
         "height": 0,
         "maxrows": "10",
@@ -861,16 +861,16 @@
         "mobileBreakpointType": "defaults",
         "action": "append",
         "x": 940,
-        "y": 960,
+        "y": 940,
         "wires": [
             []
         ]
     },
     {
-        "id": "3a6ff15d2e66d884",
+        "id": "8004cc791df266eb",
         "type": "inject",
-        "z": "8661d79bb568c823",
-        "name": "",
+        "z": "09a6d2bc18a9577a",
+        "name": "Clear the mqtt message log",
         "props": [
             {
                 "p": "payload"
@@ -887,11 +887,149 @@
         "topic": "",
         "payload": "[]",
         "payloadType": "json",
-        "x": 1730,
-        "y": 740,
+        "x": 1800,
+        "y": 620,
         "wires": [
             [
-                "89ae9e04d8b4dff4"
+                "fe7709484c22f7c6"
+            ]
+        ]
+    },
+    {
+        "id": "4fe7e7b5b3312e2b",
+        "type": "function",
+        "z": "09a6d2bc18a9577a",
+        "name": "Last Will \"Offline\" Check",
+        "func": "if (msg.topic === \"network_status\" && msg.payload === \"offline\") {\n    return {\n        topic: \"network_status\",\n        payload: []\n    };\n} else {\n    return msg;\n}\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 450,
+        "y": 700,
+        "wires": [
+            [
+                "91381bfaf442e7a9",
+                "1ad02813dd068bc5",
+                "b3f0b0d796549477"
+            ]
+        ]
+    },
+    {
+        "id": "704d31afa47f7932",
+        "type": "inject",
+        "z": "09a6d2bc18a9577a",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "network_status",
+        "payload": "{\"status\":\"offline\"}",
+        "payloadType": "json",
+        "x": 340,
+        "y": 860,
+        "wires": [
+            [
+                "4b8fa8b4dad50ad4"
+            ]
+        ]
+    },
+    {
+        "id": "a1e99bd59043cd21",
+        "type": "ui-notification",
+        "z": "09a6d2bc18a9577a",
+        "ui": "593f6178aa696044",
+        "position": "center center",
+        "colorDefault": true,
+        "color": "#000000",
+        "displayTime": "10",
+        "showCountdown": true,
+        "outputs": 1,
+        "allowDismiss": true,
+        "dismissText": "Close",
+        "allowConfirm": false,
+        "confirmText": "Confirm",
+        "raw": true,
+        "className": "",
+        "name": "Offline Alert",
+        "x": 910,
+        "y": 760,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "a3724a9eb98812bc",
+        "type": "switch",
+        "z": "09a6d2bc18a9577a",
+        "name": "Filter Offline Messages for Alerts",
+        "property": "payload",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "eq",
+                "v": "offline",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 1,
+        "x": 430,
+        "y": 780,
+        "wires": [
+            [
+                "303d82e0047aed83"
+            ]
+        ]
+    },
+    {
+        "id": "b60c0463d43817e4",
+        "type": "debug",
+        "z": "09a6d2bc18a9577a",
+        "name": "debug 3",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 900,
+        "y": 800,
+        "wires": []
+    },
+    {
+        "id": "303d82e0047aed83",
+        "type": "function",
+        "z": "09a6d2bc18a9577a",
+        "name": "Disconnect Alert Msg",
+        "func": "var currentDate = new Date();\nvar dateTimeStr = currentDate.getHours() + \":\" + currentDate.getMinutes() + \":\" \n+ currentDate.getSeconds() + \".\" + currentDate.getMilliseconds();\n\nreturn {\n    \"topic\": \"network_status\",\n    \"payload\": `<h3>Disconnect Alert</h3><p>Zone MQTT Broker has disconnected at ${dateTimeStr}</p>`\n}",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 700,
+        "y": 780,
+        "wires": [
+            [
+                "a1e99bd59043cd21",
+                "b60c0463d43817e4"
             ]
         ]
     },
@@ -927,10 +1065,10 @@
         "sessionExpiry": ""
     },
     {
-        "id": "3801941c44d8826c",
+        "id": "e92834523671ca8a",
         "type": "ui-group",
         "name": "Overall Group",
-        "page": "01fe07ce4cd16cb1",
+        "page": "e0eeb5cb062328b3",
         "width": 6,
         "height": "2",
         "order": 1,
@@ -947,7 +1085,7 @@
         "page": "5a1d25548bf241bd",
         "width": 6,
         "height": 1,
-        "order": 3,
+        "order": 7,
         "showTitle": true,
         "className": "",
         "visible": "true",
@@ -955,9 +1093,23 @@
         "groupType": "default"
     },
     {
-        "id": "6d19cc6765961b5e",
+        "id": "619b22480b24dccb",
         "type": "ui-group",
         "name": "Node 4321 Group",
+        "page": "5a1d25548bf241bd",
+        "width": 6,
+        "height": 1,
+        "order": 5,
+        "showTitle": true,
+        "className": "",
+        "visible": "true",
+        "disabled": "false",
+        "groupType": "default"
+    },
+    {
+        "id": "c9e128aa2ab502c6",
+        "type": "ui-group",
+        "name": "A9F0",
         "page": "5a1d25548bf241bd",
         "width": 6,
         "height": 1,
@@ -969,27 +1121,13 @@
         "groupType": "default"
     },
     {
-        "id": "b09206f74670c8ef",
-        "type": "ui-group",
-        "name": "A9F0",
-        "page": "5a1d25548bf241bd",
-        "width": 6,
-        "height": 1,
-        "order": 2,
-        "showTitle": true,
-        "className": "",
-        "visible": "true",
-        "disabled": "false",
-        "groupType": "default"
-    },
-    {
-        "id": "81fcd503e2dadc87",
+        "id": "243ed2f1bc512451",
         "type": "ui-group",
         "name": "Node C001",
         "page": "5a1d25548bf241bd",
         "width": 6,
         "height": 1,
-        "order": 1,
+        "order": 3,
         "showTitle": true,
         "className": "",
         "visible": "true",
@@ -997,10 +1135,10 @@
         "groupType": "default"
     },
     {
-        "id": "0c435008c91c72ec",
+        "id": "6a3ce8c651de3aef",
         "type": "ui-group",
         "name": "Overall Text Group",
-        "page": "01fe07ce4cd16cb1",
+        "page": "e0eeb5cb062328b3",
         "width": 6,
         "height": 1,
         "order": 2,
@@ -1011,7 +1149,26 @@
         "groupType": "default"
     },
     {
-        "id": "01fe07ce4cd16cb1",
+        "id": "593f6178aa696044",
+        "type": "ui-base",
+        "name": "My Dashboard",
+        "path": "/dashboard",
+        "appIcon": "",
+        "includeClientData": true,
+        "acceptsClientConfig": [
+            "ui-notification",
+            "ui-control"
+        ],
+        "showPathInSidebar": false,
+        "headerContent": "page",
+        "navigationStyle": "default",
+        "titleBarStyle": "default",
+        "showReconnectNotification": true,
+        "notificationDisplayTime": 1,
+        "showDisconnectNotification": true
+    },
+    {
+        "id": "e0eeb5cb062328b3",
         "type": "ui-page",
         "name": "Overall Page",
         "ui": "593f6178aa696044",
@@ -1041,7 +1198,7 @@
                 "cols": "12"
             }
         ],
-        "order": 1,
+        "order": 2,
         "className": "",
         "visible": true,
         "disabled": false
@@ -1077,29 +1234,10 @@
                 "cols": "12"
             }
         ],
-        "order": 2,
+        "order": 1,
         "className": "",
         "visible": "true",
         "disabled": "false"
-    },
-    {
-        "id": "593f6178aa696044",
-        "type": "ui-base",
-        "name": "My Dashboard",
-        "path": "/dashboard",
-        "appIcon": "",
-        "includeClientData": true,
-        "acceptsClientConfig": [
-            "ui-notification",
-            "ui-control"
-        ],
-        "showPathInSidebar": false,
-        "headerContent": "page",
-        "navigationStyle": "default",
-        "titleBarStyle": "default",
-        "showReconnectNotification": true,
-        "notificationDisplayTime": 1,
-        "showDisconnectNotification": true
     },
     {
         "id": "7f5813628e073612",

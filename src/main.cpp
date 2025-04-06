@@ -76,10 +76,10 @@ void publishRoutingTableToMQTT() {
     // }
 
     NetworkNode* nodes = routingtableService.getAllNetworkNodes();
-    if (!nodes) {
-        Serial.println("[MQTT] Routing table is empty.");
-        return;
-    }
+    // if (!nodes) {
+    //     Serial.println("[MQTT] Routing table is empty.");
+    //     return;
+    // }
 
     JsonDocument doc;
     //JsonArray table = doc["routing_table"].to<JsonArray>();
