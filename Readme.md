@@ -70,10 +70,13 @@ pio device monitor
 
 ## MQTT Dashboard Setup
 1. Download [Node-Red](https://nodered.org/docs/getting-started/local) to run locally on the system
+```
+sudo npm install -g --unsafe-perm node-red
+```
 2. Install the [FlowFuse library](https://flows.nodered.org/node/@flowfuse/node-red-dashboard) into the node palette
 
 FlowFuse is an additional library of flow nodes that will be used to display MQTT data.
-Top right drop down -> Manage palette
+Navigate to the Top right drop down -> Manage palette
 ![Node-Red Palette Management Screen](https://github.com/user-attachments/assets/0c51c030-6974-4023-92a2-7f987d329ae5)
 
 Download the FlowFuse add-on.
