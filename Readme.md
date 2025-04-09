@@ -1,13 +1,13 @@
 # Multi-Protocol Mesh Network for ESP32 (LoRa + BLE + Wi-Fi)
 
 ## Overview
-This project implements a multi-protocol mesh network tailored for ESP32-based devices such as the TTGO T-Beam. It leverages a combination of communication technologies—LoRa, Bluetooth Low Energy (BLE), and Wi-Fi Mesh (via PainlessMesh)—to build a robust, adaptable network for IoT use cases.
+This project implements a multi-protocol mesh network tailored for ESP32-based devices such as the TTGO T-Beam. It leverages a combination of communication technologies—LoRa, Bluetooth Low Energy (BLE), WiFi communications such as MQTT and PainlessMesh (incomplete)—to build a robust, adaptable network for IoT use cases.
 
 Each node operates in a defined role (`meshMode`), enabling only the protocols required for its function.
 
 ---
 
-## Supported Roles (`meshMode`)
+## Supported Roles (`meshMode`) [Implementation Incomplete]
 You can configure each node with one of the following modes:
 
 | Mode | Description                      |
