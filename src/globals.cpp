@@ -15,14 +15,14 @@ void setupLocalAddress() {
 
 // ----------------------------------------------------------------EDIT CONFIGURATION DETAILS HERE-------------------------------------------------------------------
 // WiFi Credentials
-const char* ssid = "";
-const char* password = "";
+const char* ssid = "Chocolate";
+const char* password = "bunnymagpie0520";
 
 // MQTT Broker Settings     
-const char* mqttServer = "192.168.86.33";  // Your broker IP address 
+const char* mqttServer = "192.168.86.153";  // Your broker IP address 
 const int mqttPort = 1883;
-const char* mqttUser = ""; // Optional
-const char* mqttPassword = ""; // Optional
+const char* mqttUser = "enduser"; // Optional
+const char* mqttPassword = "password"; // Optional
 
 
 // Broker IP (0,0,0,0) is default value, indicating NO BROKER DETECTED. If connected, it will update automatically. DO NOT EDIT THIS

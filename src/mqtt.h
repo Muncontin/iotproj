@@ -36,12 +36,15 @@ void connectMQTT() {
 
 
 
+
+
 // Callback function to handle received MQTT messages
 void callback(char* topic, byte* payload, unsigned int length) {
     Serial.print("Message arrived [");
     Serial.print(topic);
     Serial.print("]: ");
 
+    Serial.printf("Received message from dashboard.");
     // Print the message for debug
     String message;
     for (unsigned int i = 0; i < length; i++) {
@@ -62,9 +65,25 @@ void callback(char* topic, byte* payload, unsigned int length) {
     uint16_t targetAddr = (uint16_t)strtol(targetStr.c_str(), nullptr, 16);
 
     if (targetAddr == radio.getLocalAddress()) {
-        Serial.println("Message for this node, sending to relevant end device. IN PROGRESS...");
+        Serial.println("Message for this node, sending to relevant end device.");
+    
+        // Build message in the same format as "from_dashboard"
+        StaticJsonDocument<192> outDoc;
+    
+        outDoc["address"] = doc["address"];               // Keep same address
+        outDoc["end_device_type"] = 0;                    // Set to 0 (broker)
+        outDoc["device_id"] = "node-01";                  // Must be included
+        outDoc["payload"] = doc["payload"];               // Forward the payload
+        outDoc["time"] = "2025-04-09T19:24:08.229Z";      // Ideally get real time, for now use static
+    
+        char jsonOut[192];
+        serializeJson(outDoc, jsonOut);
+    
+        bool success = client.publish("to_dashboard", jsonOut, true);
+        Serial.printf("[MQTT] Published data to 'to_dashboard': %s\n", success ? "success" : "failed");
         return;
     }
+    
 
     // Send raw string over LoRa
     if (length < 192) {
@@ -108,6 +127,7 @@ void reconnect() {
 
             // Subscribe to topics
             client.subscribe("from_dashboard");
+            client.subscribe("from_end_device");
 
             Serial.println("[MQTT] Subscribed to topics: fromDashboard");
         } else {

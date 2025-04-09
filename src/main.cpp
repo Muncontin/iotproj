@@ -273,11 +273,20 @@ void processReceivedPackets(void*) {
                 } 
                 else if (deviceType == 0) {  // MQTT end device
                     if (client.connected()) {
-                        bool success = client.publish("to_dashboard", payload.c_str());
-                        Serial.printf("Published to MQTT: %s\n", success ? "success" : "failed");
+                        StaticJsonDocument<256> outDoc;
+                        outDoc["address"] = doc["address"];
+                        outDoc["end_device_type"] = doc["end_device_type"];
+                        outDoc["payload"] = doc["payload"];
+                        outDoc["time"] = doc["time"];  // optional: generate new timestamp if needed
+                    
+                        char buffer[256];
+                        serializeJson(outDoc, buffer);
+                    
+                        bool success = client.publish("to_dashboard", buffer, true);
+                        Serial.printf("Published full JSON to MQTT: %s\n", success ? "success" : "failed");
                     } else {
                         Serial.println("MQTT client not connected, can't publish.");
-                    }
+                    }                    
                 } 
                 else {
                     Serial.println("Unknown device type, no forwarding action taken.");
